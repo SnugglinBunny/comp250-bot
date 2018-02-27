@@ -15,12 +15,12 @@ import rts.units.UnitTypeTable;
  *
  * @author santi
  */
-public class RandomAI extends AI {    
-    public RandomAI(UnitTypeTable utt) {
+public class GlaDOS extends AI {    
+    public GlaDOS(UnitTypeTable utt) {
     }
     
 
-    public RandomAI() {
+    public GlaDOS() {
     }
     
     
@@ -31,7 +31,7 @@ public class RandomAI extends AI {
     
     @Override
     public AI clone() {
-        return new RandomAI();
+        return new GlaDOS();
     }
    
     
