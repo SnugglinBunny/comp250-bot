@@ -15,6 +15,8 @@ import rts.units.UnitTypeTable;
  *
  * @author santi
  */
+
+//Start of Bot class
 public class GLaDOS extends AI {    
     public GLaDOS(UnitTypeTable utt) {
     }
