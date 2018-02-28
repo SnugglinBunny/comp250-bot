@@ -15,12 +15,12 @@ import rts.units.UnitTypeTable;
  *
  * @author santi
  */
-public class GlaDOS extends AI {    
-    public GlaDOS(UnitTypeTable utt) {
+public class GLaDOS extends AI {    
+    public GLaDOS(UnitTypeTable utt) {
     }
     
 
-    public GlaDOS() {
+    public GLaDOS() {
     }
     
     
@@ -31,7 +31,7 @@ public class GlaDOS extends AI {
     
     @Override
     public AI clone() {
-        return new GlaDOS();
+        return new GLaDOS();
     }
    
     
