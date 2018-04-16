@@ -39,16 +39,26 @@ public class GLaDOS extends AI {
     
     @Override
     public PlayerAction getAction(int player, GameState gs) {
-        try {
-            if (!gs.canExecuteAnyAction(player)) return new PlayerAction();
-            PlayerActionGenerator pag = new PlayerActionGenerator(gs, player);
-            return pag.getRandom();
-        }catch(Exception e) {
-            // The only way the player action generator returns an exception is if there are no units that
-            // can execute actions, in this case, just return an empty action:
-            // However, this should never happen, since we are checking for this at the beginning
-            return new PlayerAction();
+        PlayerAction pa = new PlayerAction();
+        
+        for (Unit unit : gs.getUnits())
+        {
+            if (unit.getPlayer() == player && unit.getType().canMove && gs.getActionAssignment(unit) == null && gs.getTime() > 300)
+            {
+                UnitAction a = new UnitAction(UnitAction.TYPE_MOVE,UnitAction.DIRECTION_DOWN);
+                if (gs.isUnitActionAllowed(unit, a))
+                {
+                    pa.addUnitAction(unit, a);
+                }
+                else
+                {
+                   UnitAction a = new UnitAction(UnitAction.TYPE_MOVE,UnitAction.DIRECTION_UP);
+                   pa.addUnitAction(unit, a);
+                }
+            }
         }
+        }
+        return pa;
     }
     
     
