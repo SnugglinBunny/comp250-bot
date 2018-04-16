@@ -4,11 +4,16 @@
  */
 package bot;
 
+import ai.abstraction.AbstractionLayerAI;
+import ai.abstraction.pathfinding.AStarPathFinding;
 import ai.core.AI;
 import ai.core.ParameterSpecification;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+
 import rts.*;
+import rts.units.Unit;
 import rts.units.UnitTypeTable;
 
 /**
@@ -17,14 +22,13 @@ import rts.units.UnitTypeTable;
  */
 
 //Start of Bot class
-public class GLaDOS extends AI {    
+public class GLaDOS extends AbstractionLayerAI {
+	private Random rng;
+	
     public GLaDOS(UnitTypeTable utt) {
+    	super(new AStarPathFinding());
+    	rng = new Random();
     }
-    
-
-    public GLaDOS() {
-    }
-    
     
     @Override
     public void reset() {
@@ -33,34 +37,45 @@ public class GLaDOS extends AI {
     
     @Override
     public AI clone() {
-        return new GLaDOS();
+        return new GLaDOS(null);
     }
    
     
     @Override
     public PlayerAction getAction(int player, GameState gs) {
-        PlayerAction pa = new PlayerAction();
-        
-        for (Unit unit : gs.getUnits())
+    	for (Unit unit : gs.getUnits())
         {
-            if (unit.getPlayer() == player && unit.getType().canMove && gs.getActionAssignment(unit) == null && gs.getTime() > 300)
+            if (unit.getPlayer() == player/* && gs.getTime() > 300*/)
             {
-                UnitAction a = new UnitAction(UnitAction.TYPE_MOVE,UnitAction.DIRECTION_DOWN);
-                if (gs.isUnitActionAllowed(unit, a))
-                {
-                    pa.addUnitAction(unit, a);
-                }
-                else
-                {
-                   UnitAction a = new UnitAction(UnitAction.TYPE_MOVE,UnitAction.DIRECTION_UP);
-                   pa.addUnitAction(unit, a);
-                }
+            	 if (unit.getType().canAttack && gs.getActionAssignment(unit) == null)
+            	 {
+            		 System.out.println("What do you think I should do?");
+            		 
+            		 Unit enemyUnit = null;
+            		 
+            		 for (Unit u : gs.getUnits())
+            		 {
+            			 if (u.getPlayer() != player && u.getType().canMove)
+            			 {
+            				 enemyUnit = u;
+            			 }
+            			 
+            			 if (enemyUnit != null)
+            			 {
+            				 attack(unit, enemyUnit);
+            			 }
+            			 else
+            			 {
+            				 int x = rng.nextInt(gs.getPhysicalGameState().getWidth());
+            				 int y = rng.nextInt(gs.getPhysicalGameState().getHeight());
+            				 move(unit, x, y);
+            			 }
+            		 }
+            	 }
             }
         }
-        }
-        return pa;
+    	return translateActions(player, gs);
     }
-    
     
     @Override
     public List<ParameterSpecification> getParameters()
