@@ -43,8 +43,10 @@ public class GLaDOS extends AbstractionLayerAI {
     
     int basePosX;
     int basePosY;
+    Unit enemyBase;
     
     boolean basePositionSet = false;
+    boolean enemyBaseSet = false;
     
     //Strategy I plan to implement here:
     //The base will spawn up to 5 workers to harvest
@@ -63,6 +65,7 @@ public class GLaDOS extends AbstractionLayerAI {
         reset(a_utt);
     }
 
+    // This will be called once at the beginning of each new game
     public void reset() {
     	super.reset();
     }
@@ -80,12 +83,15 @@ public class GLaDOS extends AbstractionLayerAI {
 
     
     @Override
+    // This will be called by microRTS when it wants to create new instances of this bot (e.g., to play multiple games).
     public AI clone() {
         return new GLaDOS(null);
     }
    
     
     @Override
+    // Called by microRTS at each game cycle.
+    // Returns the action the bot wants to execute.
     public PlayerAction getAction(int player, GameState gs) {
     	
         PhysicalGameState pgs = gs.getPhysicalGameState();
@@ -97,8 +103,22 @@ public class GLaDOS extends AbstractionLayerAI {
         heavyCount = 0;
         unitCount = 0;
         
+
+        
         for (Unit u : pgs.getUnits()) {
-			if (u.getType() == workerType && u.getPlayer() == p.getID()) {
+            if (u.getType() == baseType && u.getPlayer() == p.getID() && basePositionSet == false) {
+    			basePosX = u.getX();
+    			basePosY = u.getY();
+    			System.out.println("Friendly base found at X: " + basePosX + " Y: " + basePosY);
+    			basePositionSet = true;
+    		}
+            
+            else if (u.getType() == baseType && u.getPlayer() != p.getID() && enemyBaseSet == false) {
+            	enemyBase = u;
+            	enemyBaseSet = true;
+            }
+            
+            else if (u.getType() == workerType && u.getPlayer() == p.getID()) {
 				workerCount++;
 				unitCount++;
 			}
@@ -156,17 +176,6 @@ public class GLaDOS extends AbstractionLayerAI {
 	public void baseBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// Controls all behaviour for the base starting with:
 		// Gets all units, for each of my workers it adds 1 to our worker count
-        if (basePositionSet == false) {
-        	for (Unit base : pgs.getUnits()) {
-        		if (base.getType() == baseType && base.getPlayer() == p.getID()) {
-        			basePosX = base.getX();
-        			basePosY = base.getY();
-        			System.out.println("Friendly base found at X: " + basePosX + " Y: " + basePosY);
-        			basePositionSet = true;
-        		}
-        	}
-        }
-        
 		// If the worker count is less than the number specified then we spawn a new worker and add to the count
 		if (workerCount < 3) {
 			train(u, workerType);
@@ -178,7 +187,7 @@ public class GLaDOS extends AbstractionLayerAI {
 	private void barracksBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// TODO Auto-generated method stub
 		
-   	 if (p.getResources() >= rangedType.cost && rangedCount < 7){
+   	 if (p.getResources() >= rangedType.cost && rangedCount < 3){
 	        train(u, rangedType);
 	        System.out.println("Ranger Spawned");
 	    }
@@ -190,8 +199,26 @@ public class GLaDOS extends AbstractionLayerAI {
 	
     private void rangedBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// TODO Auto-generated method stub
-		
-	}
+    	Unit closestEnemy = null;
+    	int closestDistance = 0;
+    	
+    	for (Unit enemy : pgs.getUnits()) {
+    		if (enemy.getPlayer() != p.getID() && enemy.getType() != baseType) {
+    			int d = Math.abs(enemy.getX() - u.getX()) + Math.abs(enemy.getY() - u.getY());
+    			if (closestEnemy == null || d< closestDistance) {
+    				closestEnemy = enemy;
+    				closestDistance = d;
+    			}
+    		}
+    	}
+    	
+    	if (enemyBase != null) {
+    		attack(u, enemyBase);
+    	}
+    	else {
+    		attack(u, closestEnemy);
+    	}
+    }
 
 	private void meleeUnitBehavior(Unit u, Player p, GameState gs) {
 		// TODO Auto-generated method stub
