@@ -38,22 +38,14 @@ public class GLaDOS extends AbstractionLayerAI {
     
     int workerCount = 0;
     int rangedCount = 0;
-    int heavyCount = 0;
     int unitCount = 0;
     
-    int basePosX;
-    int basePosY;
-    Unit enemyBase;
+    Unit base = null;
+    Unit enemyBase = null;
     
-    boolean basePositionSet = false;
-    boolean enemyBaseSet = false;
-    
-    //Strategy I plan to implement here:
-    //The base will spawn up to 5 workers to harvest
-    //Then it will start creating 7 ranged attackers to defend which will leave one spot by the base for new spawns
-    //After this it will create heavy's.
-    //Workers will rush when all resources are depleted.
-    //Heavy's will rush slightly behind the workers and then finally the ranged defence will slowly spread outwards from the base attacking closest enemies.
+    // Strategy I plan to implement here:
+    // The base will spawn workers up to our set limit
+    // Following this it will just spawn ranged units
 	
     public GLaDOS(UnitTypeTable a_utt) {
         this(a_utt, new AStarPathFinding());
@@ -100,22 +92,17 @@ public class GLaDOS extends AbstractionLayerAI {
 		
         workerCount = 0;
         rangedCount = 0;
-        heavyCount = 0;
         unitCount = 0;
-        
-
-        
+                
         for (Unit u : pgs.getUnits()) {
-            if (u.getType() == baseType && u.getPlayer() == p.getID() && basePositionSet == false) {
-    			basePosX = u.getX();
-    			basePosY = u.getY();
-    			System.out.println("Friendly base found at X: " + basePosX + " Y: " + basePosY);
-    			basePositionSet = true;
+            if (u.getType() == baseType && u.getPlayer() == p.getID() && base == null) {
+            	base = u;
+    			System.out.println("Friendly base found at X: " + base.getX() + " Y: " + base.getY());
     		}
             
-            else if (u.getType() == baseType && u.getPlayer() != p.getID() && enemyBaseSet == false) {
+            else if (u.getType() == baseType && u.getPlayer() != p.getID() && enemyBase == null) {
             	enemyBase = u;
-            	enemyBaseSet = true;
+    			System.out.println("Enemy base found at X: " + enemyBase.getX() + " Y: " + enemyBase.getY());
             }
             
             else if (u.getType() == workerType && u.getPlayer() == p.getID()) {
@@ -124,10 +111,6 @@ public class GLaDOS extends AbstractionLayerAI {
 			}
 			else if (u.getType() == rangedType && u.getPlayer() == p.getID()) {
 				rangedCount++;
-				unitCount++;
-			}
-			else if (u.getType() == heavyType && u.getPlayer() == p.getID()) {
-				heavyCount++;
 				unitCount++;
 			}
 		}
@@ -153,13 +136,6 @@ public class GLaDOS extends AbstractionLayerAI {
             }
         }
 
-        // Controls melee units:
-        for (Unit u : pgs.getUnits()) {
-            if (u.getType().canAttack && !u.getType().canHarvest && u.getPlayer() == player && gs.getActionAssignment(u) == null) {
-                meleeUnitBehavior(u, p, gs);
-            }
-        }
-
         // Controls workers:
         List<Unit> workers = new LinkedList<Unit>();
         for (Unit u : pgs.getUnits()) {
@@ -174,9 +150,8 @@ public class GLaDOS extends AbstractionLayerAI {
     }
     
 	public void baseBehavior(Unit u, Player p, PhysicalGameState pgs) {
-		// Controls all behaviour for the base starting with:
-		// Gets all units, for each of my workers it adds 1 to our worker count
-		// If the worker count is less than the number specified then we spawn a new worker and add to the count
+		// Controls all behaviour for the base
+		// If we drop below the set workers it will spawn more
 		if (workerCount < 3) {
 			train(u, workerType);
 	        System.out.println("Worker Spawned");
@@ -187,14 +162,10 @@ public class GLaDOS extends AbstractionLayerAI {
 	private void barracksBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// TODO Auto-generated method stub
 		
-   	 if (p.getResources() >= rangedType.cost && rangedCount < 3){
+   	 if (p.getResources() >= rangedType.cost && rangedCount < 12){
 	        train(u, rangedType);
 	        System.out.println("Ranger Spawned");
 	    }
-   	 else if (p.getResources() >= heavyType.cost && heavyCount < 10) {
-   		 	train(u, heavyType);
-   		 	System.out.println("Heavy Spawned");
-   	 }
 	}
 	
     private void rangedBehavior(Unit u, Player p, PhysicalGameState pgs) {
@@ -208,22 +179,19 @@ public class GLaDOS extends AbstractionLayerAI {
     			if (closestEnemy == null || d< closestDistance) {
     				closestEnemy = enemy;
     				closestDistance = d;
+    				//System.out.println("Closest Enemy is " + closestEnemy + "Distance: " + closestDistance);
     			}
     		}
     	}
     	
-    	if (enemyBase != null) {
-    		attack(u, enemyBase);
-    	}
-    	else {
-    		attack(u, closestEnemy);
-    	}
+    	for(Unit enemyBaseUnit : pgs.getUnits())
+	    	if (enemyBaseUnit.getPlayer() != p.getID() && enemyBaseUnit.getType() == baseType) {
+	    		attack(u, enemyBaseUnit);
+	    	}
+	    	else {
+	    		attack(u, closestEnemy);
+	    	}
     }
-
-	private void meleeUnitBehavior(Unit u, Player p, GameState gs) {
-		// TODO Auto-generated method stub
-		
-	}
     
 	private void workersBehavior(List<Unit> workers, Player p, PhysicalGameState pgs) {
 		// TODO Auto-generated method stub
@@ -261,14 +229,14 @@ public class GLaDOS extends AbstractionLayerAI {
         if (ownedBarracks == 0) {
             // Checks if we have a barracks and builds one if not
             if (p.getResources() >= barracksType.cost + resourcesUsed && !freeWorkers.isEmpty()) {
-            	if (basePosX < 4 || basePosY < 4) {
+            	if (base.getX() < 4 || base.getY() < 4) {
                     Unit u = freeWorkers.remove(0);
-                    buildIfNotAlreadyBuilding(u,barracksType,basePosX + 3,basePosY + 3,reservedPositions,p,pgs);
+                    buildIfNotAlreadyBuilding(u,barracksType,base.getX() + 3,base.getY() + 3,reservedPositions,p,pgs);
                 	resourcesUsed += barracksType.cost;
             	}
-            	else if (basePosX > 4 || basePosY > 4) {
+            	else if (base.getX() > 4 || base.getY() > 4) {
                     Unit u = freeWorkers.remove(0);
-                    buildIfNotAlreadyBuilding(u,barracksType,basePosX - 1,basePosY - 1,reservedPositions,p,pgs);
+                    buildIfNotAlreadyBuilding(u,barracksType,base.getX() - 1,base.getY() - 1,reservedPositions,p,pgs);
                 	resourcesUsed += barracksType.cost;
             	}
             }
