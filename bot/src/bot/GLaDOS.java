@@ -174,9 +174,9 @@ public class GLaDOS extends AbstractionLayerAI {
     	int closestDistance = 0;
     	
     	for (Unit enemy : pgs.getUnits()) {
-    		if (enemy.getPlayer() != p.getID() && enemy.getType() != baseType) {
+    		if (enemy.getPlayer() != p.getID()) {
     			int d = Math.abs(enemy.getX() - u.getX()) + Math.abs(enemy.getY() - u.getY());
-    			if (closestEnemy == null || d< closestDistance) {
+    			if (closestEnemy == null || d < closestDistance) {
     				closestEnemy = enemy;
     				closestDistance = d;
     				//System.out.println("Closest Enemy is " + closestEnemy + "Distance: " + closestDistance);
