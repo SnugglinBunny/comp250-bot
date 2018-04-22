@@ -38,14 +38,18 @@ public class GLaDOS extends AbstractionLayerAI {
     
     int workerCount = 0;
     int rangedCount = 0;
+    int heavyCount = 0;
     int unitCount = 0;
     
     Unit base = null;
     Unit enemyBase = null;
     
-    // Strategy I plan to implement here:
-    // The base will spawn workers up to our set limit
-    // Following this it will just spawn ranged units
+    //Strategy I plan to implement here:
+    //The base will spawn up to 5 workers to harvest
+    //Then it will start creating 7 ranged attackers to defend which will leave one spot by the base for new spawns
+    //After this it will create heavy's.
+    //Workers will rush when all resources are depleted.
+    //Heavy's will rush slightly behind the workers and then finally the ranged defence will slowly spread outwards from the base attacking closest enemies.
 	
     public GLaDOS(UnitTypeTable a_utt) {
         this(a_utt, new AStarPathFinding());
@@ -92,6 +96,7 @@ public class GLaDOS extends AbstractionLayerAI {
 		
         workerCount = 0;
         rangedCount = 0;
+        heavyCount = 0;
         unitCount = 0;
                 
         for (Unit u : pgs.getUnits()) {
@@ -103,8 +108,10 @@ public class GLaDOS extends AbstractionLayerAI {
             else if (u.getType() == baseType && u.getPlayer() != p.getID() && enemyBase == null) {
             	enemyBase = u;
     			System.out.println("Enemy base found at X: " + enemyBase.getX() + " Y: " + enemyBase.getY());
+    			double distanceBase = distanceBetween(enemyBase, base);
+    			System.out.println("distance between bases: " + distanceBase);
             }
-            
+           
             else if (u.getType() == workerType && u.getPlayer() == p.getID()) {
 				workerCount++;
 				unitCount++;
@@ -113,7 +120,26 @@ public class GLaDOS extends AbstractionLayerAI {
 				rangedCount++;
 				unitCount++;
 			}
+			else if (u.getType() == heavyType && u.getPlayer() == p.getID()) {
+				heavyCount++;
+				unitCount++;
+			}
 		}
+        
+    	Unit closestEnemy = null;
+    	int closestDistance = 0;
+    	
+    	for (Unit enemy : pgs.getUnits()) {
+    		if (enemy.getPlayer() != p.getID()) {
+    			int d = Math.abs(enemy.getX() - base.getX()) + Math.abs(enemy.getY() - base.getY());
+    			if (closestEnemy == null || d < closestDistance) {
+    				closestEnemy = enemy;
+    				closestDistance = d;
+    				//System.out.println(d);
+    				
+    			}
+    		}
+    	}
         
         // Controls the base:
         for (Unit u : pgs.getUnits()) {
@@ -133,6 +159,13 @@ public class GLaDOS extends AbstractionLayerAI {
         for (Unit u : pgs.getUnits()) {
             if (u.getType() == rangedType && u.getPlayer() == player && gs.getActionAssignment(u) == null) {
                 rangedBehavior(u, p, pgs);
+            }
+        }
+
+        // Controls melee units:
+        for (Unit u : pgs.getUnits()) {
+            if (u.getType().canAttack && !u.getType().canHarvest && u.getPlayer() == player && gs.getActionAssignment(u) == null) {
+                meleeUnitBehavior(u, p, gs);
             }
         }
 
@@ -162,36 +195,35 @@ public class GLaDOS extends AbstractionLayerAI {
 	private void barracksBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// TODO Auto-generated method stub
 		
-   	 if (p.getResources() >= rangedType.cost && rangedCount < 12){
+   	 if (p.getResources() >= rangedType.cost && rangedCount < 5){
 	        train(u, rangedType);
 	        System.out.println("Ranger Spawned");
 	    }
+   	 else if (p.getResources() >= heavyType.cost) {
+   		 	train(u, heavyType);
+   		 	System.out.println("Heavy Spawned");
+   	 }
 	}
 	
     private void rangedBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// TODO Auto-generated method stub
-    	Unit closestEnemy = null;
-    	int closestDistance = 0;
-    	
-    	for (Unit enemy : pgs.getUnits()) {
-    		if (enemy.getPlayer() != p.getID()) {
-    			int d = Math.abs(enemy.getX() - u.getX()) + Math.abs(enemy.getY() - u.getY());
-    			if (closestEnemy == null || d < closestDistance) {
-    				closestEnemy = enemy;
-    				closestDistance = d;
-    				//System.out.println("Closest Enemy is " + closestEnemy + "Distance: " + closestDistance);
-    			}
-    		}
+/*    	if (closestDistance > 5) {
+    		System.out.println("Closest Enemy is " + closestEnemy + "Distance: " + closestDistance);
     	}
     	
     	for(Unit enemyBaseUnit : pgs.getUnits())
 	    	if (enemyBaseUnit.getPlayer() != p.getID() && enemyBaseUnit.getType() == baseType) {
-	    		attack(u, enemyBaseUnit);
+	    		attack(u, enemyBase);
 	    	}
 	    	else {
 	    		attack(u, closestEnemy);
-	    	}
+	    	}*/
     }
+
+	private void meleeUnitBehavior(Unit u, Player p, GameState gs) {
+		// TODO Auto-generated method stub
+		
+	}
     
 	private void workersBehavior(List<Unit> workers, Player p, PhysicalGameState pgs) {
 		// TODO Auto-generated method stub
@@ -281,6 +313,12 @@ public class GLaDOS extends AbstractionLayerAI {
             }
         }
     }
+	
+	private int distanceBetween(Unit a, Unit b) {
+		// TODO Auto-generated method stub
+		int distanceValue = (int) Math.sqrt((a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY()));
+		return distanceValue;
+	}
  	
 	@Override
     public List<ParameterSpecification> getParameters()
