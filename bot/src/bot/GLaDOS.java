@@ -40,6 +40,7 @@ public class GLaDOS extends AbstractionLayerAI {
     
     Unit base = null;
     Unit enemyBase = null;
+    Unit enemyBarracks = null;
     
     List<Unit> enemyUnitList = new LinkedList<Unit>();
     
@@ -115,6 +116,12 @@ public class GLaDOS extends AbstractionLayerAI {
             
             else if (u.getType() == baseType && u.getPlayer() != p.getID()) {
             	enemyBase = u;
+    			//System.out.println("Enemy base found at X: " + enemyBase.getX() + " Y: " + enemyBase.getY());
+    			//System.out.println(enemyUnitList);
+            }
+            
+            else if (u.getType() == barracksType && u.getPlayer() != p.getID()) {
+            	enemyBarracks = u;
     			//System.out.println("Enemy base found at X: " + enemyBase.getX() + " Y: " + enemyBase.getY());
     			//System.out.println(enemyUnitList);
             }
@@ -276,7 +283,7 @@ public class GLaDOS extends AbstractionLayerAI {
             // This first part is finds closest resource to the units
             for (Unit res : pgs.getUnits()) {
                 if (res.getType().isResource) {
-                    int resD = Math.abs(res.getX() - u.getX()) + Math.abs(res.getY() - u.getY());
+                    int resD = distanceBetween(res, u);
                     if (closestResource == null || resD < closestDistance) {
                         closestResource = res;
                         closestDistance = resD;
@@ -295,7 +302,7 @@ public class GLaDOS extends AbstractionLayerAI {
                 }
             }
             // This part tells the free workers to harvest the closest resource and return it to the closest base
-            if (closestResource != null && closestBase != null) {
+            if (closestResource != null && closestBase != null && closestDistance < 4) {
                 ai.abstraction.AbstractAction aa = getAbstractAction(u);
                 if (aa instanceof Harvest) {
                     Harvest h_aa = (Harvest)aa;
@@ -303,6 +310,10 @@ public class GLaDOS extends AbstractionLayerAI {
                 } else {
                     harvest(u, closestResource, closestBase);
                 }
+            }
+            else {
+            	Unit closestEnemy = closestEnemyUnit(u);
+            	attack(u, closestEnemy);
             }
         }
     }
