@@ -44,6 +44,8 @@ public class GLaDOS extends AbstractionLayerAI {
     Unit base = null;
     Unit enemyBase = null;
     
+    List<Unit> enemyUnitList = new LinkedList<Unit>();
+    
     //Strategy I plan to implement here:
     //The base will spawn up to 5 workers to harvest
     //Then it will start creating 7 ranged attackers to defend which will leave one spot by the base for new spawns
@@ -93,6 +95,14 @@ public class GLaDOS extends AbstractionLayerAI {
         PhysicalGameState pgs = gs.getPhysicalGameState();
         Player p = gs.getPlayer(player);
         // System.out.println("GLaDOS " + player + " (cycle " + gs.getTime() + ")");
+        
+        
+        for (Unit u : pgs.getUnits()) {
+        	if (u.getPlayer() != p.getID() && u.getType().isResource == false) {
+        		enemyUnitList.add(u);
+        		
+        	}
+        }
 		
         workerCount = 0;
         rangedCount = 0;
@@ -109,7 +119,8 @@ public class GLaDOS extends AbstractionLayerAI {
             	enemyBase = u;
     			System.out.println("Enemy base found at X: " + enemyBase.getX() + " Y: " + enemyBase.getY());
     			double distanceBase = distanceBetween(enemyBase, base);
-    			System.out.println("distance between bases: " + distanceBase);
+    			System.out.println("Distance between bases: " + distanceBase);
+    			System.out.println(enemyUnitList);
             }
            
             else if (u.getType() == workerType && u.getPlayer() == p.getID()) {
@@ -125,21 +136,6 @@ public class GLaDOS extends AbstractionLayerAI {
 				unitCount++;
 			}
 		}
-        
-    	Unit closestEnemy = null;
-    	int closestDistance = 0;
-    	
-    	for (Unit enemy : pgs.getUnits()) {
-    		if (enemy.getPlayer() != p.getID()) {
-    			int d = Math.abs(enemy.getX() - base.getX()) + Math.abs(enemy.getY() - base.getY());
-    			if (closestEnemy == null || d < closestDistance) {
-    				closestEnemy = enemy;
-    				closestDistance = d;
-    				//System.out.println(d);
-    				
-    			}
-    		}
-    	}
         
         // Controls the base:
         for (Unit u : pgs.getUnits()) {
@@ -164,7 +160,7 @@ public class GLaDOS extends AbstractionLayerAI {
 
         // Controls melee units:
         for (Unit u : pgs.getUnits()) {
-            if (u.getType().canAttack && !u.getType().canHarvest && u.getPlayer() == player && gs.getActionAssignment(u) == null) {
+            if (u.getType().canAttack && !u.getType().canHarvest && u.getType() != rangedType && u.getPlayer() == player && gs.getActionAssignment(u) == null) {
                 meleeUnitBehavior(u, p, gs);
             }
         }
@@ -199,7 +195,7 @@ public class GLaDOS extends AbstractionLayerAI {
 	        train(u, rangedType);
 	        System.out.println("Ranger Spawned");
 	    }
-   	 else if (p.getResources() >= heavyType.cost) {
+   	 else if (p.getResources() >= heavyType.cost && heavyCount < 3) {
    		 	train(u, heavyType);
    		 	System.out.println("Heavy Spawned");
    	 }
@@ -207,22 +203,13 @@ public class GLaDOS extends AbstractionLayerAI {
 	
     private void rangedBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// TODO Auto-generated method stub
-/*    	if (closestDistance > 5) {
-    		System.out.println("Closest Enemy is " + closestEnemy + "Distance: " + closestDistance);
-    	}
-    	
-    	for(Unit enemyBaseUnit : pgs.getUnits())
-	    	if (enemyBaseUnit.getPlayer() != p.getID() && enemyBaseUnit.getType() == baseType) {
-	    		attack(u, enemyBase);
-	    	}
-	    	else {
-	    		attack(u, closestEnemy);
-	    	}*/
+    	Unit closestEnemy = closestEnemyUnit(u);
+    	attack(u, closestEnemy);
     }
 
 	private void meleeUnitBehavior(Unit u, Player p, GameState gs) {
 		// TODO Auto-generated method stub
-		
+		attack(u, enemyBase);
 	}
     
 	private void workersBehavior(List<Unit> workers, Player p, PhysicalGameState pgs) {
@@ -315,11 +302,26 @@ public class GLaDOS extends AbstractionLayerAI {
     }
 	
 	private int distanceBetween(Unit a, Unit b) {
-		// TODO Auto-generated method stub
+		// Determines the distance between two given units as an int
 		int distanceValue = (int) Math.sqrt((a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY()));
 		return distanceValue;
 	}
- 	
+
+	private Unit closestEnemyUnit(Unit a) {
+		// Determines the distance between two given units as an int
+		Unit closestEnemy = null;
+		int closestDistance = 0;
+
+		for (Unit u : enemyUnitList) {
+    			int d = distanceBetween(u, a);
+    			if (closestEnemy == null || d < closestDistance) {
+    				closestEnemy = u;
+    				closestDistance = d;
+    			}
+		}
+		return closestEnemy;
+	}
+	
 	@Override
     public List<ParameterSpecification> getParameters()
     {
