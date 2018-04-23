@@ -10,9 +10,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-
-import javax.swing.AbstractAction;
-
 import rts.*;
 import rts.units.Unit;
 import rts.units.UnitType;
@@ -119,8 +116,6 @@ public class GLaDOS extends AbstractionLayerAI {
             else if (u.getType() == baseType && u.getPlayer() != p.getID()) {
             	enemyBase = u;
     			//System.out.println("Enemy base found at X: " + enemyBase.getX() + " Y: " + enemyBase.getY());
-    			double distanceBase = distanceBetween(enemyBase, base);
-    			//System.out.println("Distance between bases: " + distanceBase);
     			//System.out.println(enemyUnitList);
             }
            
@@ -190,8 +185,7 @@ public class GLaDOS extends AbstractionLayerAI {
 	
 	
 	private void barracksBehavior(Unit u, Player p, PhysicalGameState pgs) {
-		// TODO Auto-generated method stub
-		
+		// Controls barracks
    	 if (p.getResources() >= rangedType.cost && rangedCount < 5){
 	        train(u, rangedType);
 	        System.out.println("Ranger Spawned");
@@ -203,18 +197,18 @@ public class GLaDOS extends AbstractionLayerAI {
 	}
 	
     private void rangedBehavior(Unit u, Player p, PhysicalGameState pgs) {
-		// TODO Auto-generated method stub
+		// Controls ranged units
     	Unit closestEnemy = closestEnemyUnit(u);
     	attack(u, closestEnemy);
     }
 
 	private void meleeUnitBehavior(Unit u, Player p, GameState gs) {
-		// TODO Auto-generated method stub
+		// Controls all non ranged units
 		attack(u, enemyBase);
 	}
     
 	private void workersBehavior(List<Unit> workers, Player p, PhysicalGameState pgs) {
-		// TODO Auto-generated method stub
+		// Controls all workers
         List<Unit> freeWorkers = new LinkedList<Unit>();
         freeWorkers.addAll(workers);
         
