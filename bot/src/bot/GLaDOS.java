@@ -41,8 +41,6 @@ public class GLaDOS extends AbstractionLayerAI {
     Unit base = null;
     Unit enemyBase = null;
     
-    int cycleCount = 0;
-    
     List<Unit> enemyUnitList = new LinkedList<Unit>();
     
     //Strategy I plan to implement here:
@@ -173,7 +171,6 @@ public class GLaDOS extends AbstractionLayerAI {
         workersBehavior(workers, p, pgs);
 
         // This method simply takes all the unit actions executed so far, and packages them into a PlayerAction
-        cycleCount++;
         return translateActions(player, gs);
     }
     
@@ -201,18 +198,8 @@ public class GLaDOS extends AbstractionLayerAI {
 	
     private void rangedBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// Controls ranged units
-    	if (rangedCount > 1) {
-        	Unit closestEnemy = closestEnemyUnit(u);
-        	attack(u, closestEnemy);
-    	}
-    	else {
-    		Unit closestEnemy = closestEnemyUnit(u);
-    		int closestDistance = distanceBetween(closestEnemy, u);
-    		
-    		if (closestDistance < 4) {
-    			attack(u, closestEnemy);
-    		}
-    	}
+    	Unit closestEnemy = closestEnemyUnit(u);
+    	attack(u, closestEnemy);
     }
 
 	private void meleeUnitBehavior(Unit u, Player p, GameState gs) {
