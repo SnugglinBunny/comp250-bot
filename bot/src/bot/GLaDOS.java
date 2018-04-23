@@ -96,6 +96,7 @@ public class GLaDOS extends AbstractionLayerAI {
         Player p = gs.getPlayer(player);
         // System.out.println("GLaDOS " + player + " (cycle " + gs.getTime() + ")");
         
+        enemyUnitList.clear();
         
         for (Unit u : pgs.getUnits()) {
         	if (u.getPlayer() != p.getID() && u.getType().isResource == false) {
