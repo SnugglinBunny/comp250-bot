@@ -256,12 +256,12 @@ public class GLaDOS extends AbstractionLayerAI {
             if (p.getResources() >= barracksType.cost + resourcesUsed && !freeWorkers.isEmpty()) {
             	if (base.getX() < 4 || base.getY() < 4) {
                     Unit u = freeWorkers.remove(0);
-                    buildIfNotAlreadyBuilding(u,barracksType,base.getX() + 3,base.getY() + 3,reservedPositions,p,pgs);
+                    buildIfNotAlreadyBuilding(u,barracksType,base.getX() + 3,base.getY() - 1,reservedPositions,p,pgs);
                 	resourcesUsed += barracksType.cost;
             	}
             	else if (base.getX() > 4 || base.getY() > 4) {
                     Unit u = freeWorkers.remove(0);
-                    buildIfNotAlreadyBuilding(u,barracksType,base.getX() - 1,base.getY() - 1,reservedPositions,p,pgs);
+                    buildIfNotAlreadyBuilding(u,barracksType,base.getX() - 1,base.getY() + 1,reservedPositions,p,pgs);
                 	resourcesUsed += barracksType.cost;
             	}
             }
@@ -326,6 +326,21 @@ public class GLaDOS extends AbstractionLayerAI {
     			}
 		}
 		return closestEnemy;
+	}
+	
+	private Unit furthestEnemyUnit(Unit a) {
+		// Determines the distance between two given units as an int
+		Unit furthestEnemy = null;
+		int furthestDistance = 0;
+
+		for (Unit u : enemyUnitList) {
+    			int d = distanceBetween(u, a);
+    			if (furthestEnemy == null || d > furthestDistance) {
+    				furthestEnemy = u;
+    				furthestDistance = d;
+    			}
+		}
+		return furthestEnemy;
 	}
 	
 	@Override
