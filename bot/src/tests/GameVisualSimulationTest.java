@@ -7,6 +7,7 @@ package tests;
 
 import ai.core.AI;
 import ai.RandomBiasedAI;
+import ai.abstraction.HeavyRush;
 import ai.abstraction.WorkerRush;
 import ai.abstraction.pathfinding.BFSPathFinding;
 import ai.mcts.naivemcts.NaiveMCTS;
@@ -37,7 +38,7 @@ public class GameVisualSimulationTest {
         
         //AI ai1 = new WorkerRush(utt, new BFSPathFinding());
         AI ai1 = new GLaDOS(utt);
-        AI ai2 = new RandomBiasedAI();
+        AI ai2 = new HeavyRush(utt);
 
         JFrame w = PhysicalGameStatePanel.newVisualizer(gs,640,640,false,PhysicalGameStatePanel.COLORSCHEME_BLACK);
 //        JFrame w = PhysicalGameStatePanel.newVisualizer(gs,640,640,false,PhysicalGameStatePanel.COLORSCHEME_WHITE);
