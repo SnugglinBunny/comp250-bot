@@ -111,17 +111,17 @@ public class GLaDOS extends AbstractionLayerAI {
         unitCount = 0;
                 
         for (Unit u : pgs.getUnits()) {
-            if (u.getType() == baseType && u.getPlayer() == p.getID() && base == null) {
+            if (u.getType() == baseType && u.getPlayer() == p.getID()) {
             	base = u;
-    			System.out.println("Friendly base found at X: " + base.getX() + " Y: " + base.getY());
+    			//System.out.println("Friendly base found at X: " + base.getX() + " Y: " + base.getY());
     		}
             
-            else if (u.getType() == baseType && u.getPlayer() != p.getID() && enemyBase == null) {
+            else if (u.getType() == baseType && u.getPlayer() != p.getID()) {
             	enemyBase = u;
-    			System.out.println("Enemy base found at X: " + enemyBase.getX() + " Y: " + enemyBase.getY());
+    			//System.out.println("Enemy base found at X: " + enemyBase.getX() + " Y: " + enemyBase.getY());
     			double distanceBase = distanceBetween(enemyBase, base);
-    			System.out.println("Distance between bases: " + distanceBase);
-    			System.out.println(enemyUnitList);
+    			//System.out.println("Distance between bases: " + distanceBase);
+    			//System.out.println(enemyUnitList);
             }
            
             else if (u.getType() == workerType && u.getPlayer() == p.getID()) {
