@@ -198,8 +198,19 @@ public class GLaDOS extends AbstractionLayerAI {
 	
     private void rangedBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// Controls ranged units
-    	Unit closestEnemy = closestEnemyUnit(u);
-    	attack(u, closestEnemy);
+		// Controls ranged units
+    	if (rangedCount > 1) {
+        	Unit closestEnemy = closestEnemyUnit(u);
+        	attack(u, closestEnemy);
+    	}
+    	else {
+    		Unit closestEnemy = closestEnemyUnit(u);
+    		int closestDistance = distanceBetween(closestEnemy, u);
+    		
+    		if (closestDistance < 4) {
+    			attack(u, closestEnemy);
+    		}
+    	}
     }
 
 	private void meleeUnitBehavior(Unit u, Player p, GameState gs) {
