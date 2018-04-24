@@ -280,15 +280,14 @@ public class GLaDOS extends AbstractionLayerAI {
 			}
 			
 			else if (base != null){
-				move(u, base.getX(), base.getY() + baseDefence);
-				baseDefence++;
+				move(u, base.getX() + baseDefence, base.getY() + 1);
 			}
 		}
 		else if (enemyUnitList.size() > 0) {
 			Unit closestEnemy = closestEnemyUnit(u);
-			int enemyDistance = distanceBetween(u, closestEnemy);
 			attack(u, closestEnemy);
 			}
+		baseDefence++;
 		}
     
 	private void workersBehavior(List<Unit> workers, Player p, PhysicalGameState pgs) {
@@ -371,7 +370,7 @@ public class GLaDOS extends AbstractionLayerAI {
             	if (enemyBase != null) {
             		attack(u, enemyBase);
             	}
-            	else {
+            	else if (enemyUnitList.size() > 0){
             		Unit closestEnemy = closestEnemyUnit(u);
                 	attack(u, closestEnemy);
             	}
@@ -435,7 +434,7 @@ public class GLaDOS extends AbstractionLayerAI {
         enemyBase = null;
         enemyBarracks = null;
         
-        baseDefence = 1;
+        baseDefence = -1;
 	}
 	
 	@Override
