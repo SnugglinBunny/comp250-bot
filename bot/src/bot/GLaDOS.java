@@ -56,13 +56,6 @@ public class GLaDOS extends AbstractionLayerAI {
     
     int friendlyPower = 0;
     int enemyPower = 0;
-        
-    //Strategy I plan to implement here:
-    //The base will spawn up to 5 workers to harvest
-    //Then it will start creating 7 ranged attackers to defend which will leave one spot by the base for new spawns
-    //After this it will create heavy's.
-    //Workers will rush when all resources are depleted.
-    //Heavy's will rush slightly behind the workers and then finally the ranged defence will slowly spread outwards from the base attacking closest enemies.
 	
     public GLaDOS(UnitTypeTable a_utt) {
         this(a_utt, new AStarPathFinding());
@@ -124,7 +117,7 @@ public class GLaDOS extends AbstractionLayerAI {
         		else if (u.getType() == workerType) {
         			workerList.add(u);
         			UnitList.add(u);
-        			System.out.println("worker added to list");
+        			//System.out.println("worker added to list");
         		}
         		
         		else if (u.getType() == rangedType) {
@@ -399,7 +392,7 @@ public class GLaDOS extends AbstractionLayerAI {
 		return closestEnemy;
 	}
 	
-	private Unit furthestEnemyUnit(Unit a) {
+/*	private Unit furthestEnemyUnit(Unit a) {
 		// Determines the distance between two given units as an int
 		Unit furthestEnemy = null;
 		int furthestDistance = 0;
@@ -412,7 +405,7 @@ public class GLaDOS extends AbstractionLayerAI {
     			}
 		}
 		return furthestEnemy;
-	}
+	}*/
 	
 	void cleanup(){
         // I clear unit lists at the start of each cycle
