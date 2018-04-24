@@ -264,26 +264,32 @@ public class GLaDOS extends AbstractionLayerAI {
 
 	private void meleeUnitBehavior(Unit u, Player p, GameState gs) {
 		// Controls all non ranged units
-		Unit closestEnemyToBase = closestEnemyUnit(base);
-		int enemyDistanceToBase = distanceBetween(base, closestEnemyToBase);
-		
-		Unit closestEnemy = closestEnemyUnit(u);
-		int enemyDistance = distanceBetween(u, closestEnemy);
-		
-		if (enemyDistance < 3) {
+		if (enemyUnitList.size() > 0 && base != null) {
+			Unit closestEnemyToBase = closestEnemyUnit(base);
+			int enemyDistanceToBase = distanceBetween(base, closestEnemyToBase);
+			
+			Unit closestEnemy = closestEnemyUnit(u);
+			int enemyDistance = distanceBetween(u, closestEnemy);
+			
+			if (enemyDistance < 3) {
+				attack(u, closestEnemy);
+			}
+			
+			if (enemyDistanceToBase < 4) {
+				attack(u, closestEnemyToBase);
+			}
+			
+			else if (base != null){
+				move(u, base.getX(), base.getY() + baseDefence);
+				baseDefence++;
+			}
+		}
+		else if (enemyUnitList.size() > 0) {
+			Unit closestEnemy = closestEnemyUnit(u);
+			int enemyDistance = distanceBetween(u, closestEnemy);
 			attack(u, closestEnemy);
+			}
 		}
-		
-		if (enemyDistanceToBase < 4) {
-			attack(u, closestEnemyToBase);
-		}
-		
-		else {
-			move(u, base.getX() + baseDefence, base.getY());
-			baseDefence++;
-		}
-		
-	}
     
 	private void workersBehavior(List<Unit> workers, Player p, PhysicalGameState pgs) {
 		// Controls all workers
