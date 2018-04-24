@@ -32,15 +32,18 @@ public class GLaDOS extends AbstractionLayerAI {
     UnitType heavyType;
     UnitType lightType;
     UnitType rangedType;
-    
-    int workerCount = 0;
-    int rangedCount = 0;
-    int heavyCount = 0;
-    int unitCount = 0;
+
+    List<Unit> workerUnitList = new LinkedList<Unit>();
+    List<Unit> rangedUnitList = new LinkedList<Unit>();
+    List<Unit> heavyUnitList = new LinkedList<Unit>();
+    List<Unit> UnitList = new LinkedList<Unit>();
     
     Unit base = null;
     Unit enemyBase = null;
     Unit enemyBarracks = null;
+    
+    Unit closestWorker = null;
+    Unit closestWorker2 = null;
     
     List<Unit> enemyUnitList = new LinkedList<Unit>();
     
@@ -102,11 +105,6 @@ public class GLaDOS extends AbstractionLayerAI {
         		
         	}
         }
-		
-        workerCount = 0;
-        rangedCount = 0;
-        heavyCount = 0;
-        unitCount = 0;
                 
         for (Unit u : pgs.getUnits()) {
             if (u.getType() == baseType && u.getPlayer() == p.getID()) {
@@ -127,16 +125,16 @@ public class GLaDOS extends AbstractionLayerAI {
             }
            
             else if (u.getType() == workerType && u.getPlayer() == p.getID()) {
-				workerCount++;
-				unitCount++;
-			}
+				workerUnitList.add(u);
+				UnitList.add(u);
+            }
 			else if (u.getType() == rangedType && u.getPlayer() == p.getID()) {
-				rangedCount++;
-				unitCount++;
+				rangedUnitList.add(u);
+				UnitList.add(u);
 			}
 			else if (u.getType() == heavyType && u.getPlayer() == p.getID()) {
-				heavyCount++;
-				unitCount++;
+				heavyUnitList.add(u);
+				UnitList.add(u);
 			}
 		}
         
@@ -184,7 +182,7 @@ public class GLaDOS extends AbstractionLayerAI {
 	public void baseBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// Controls all behaviour for the base
 		// If we drop below the set workers it will spawn more
-		if (workerCount < 3) {
+		if (workerUnitList.size() < 4) {
 			train(u, workerType);
 	        System.out.println("Worker Spawned");
 		}
@@ -193,11 +191,11 @@ public class GLaDOS extends AbstractionLayerAI {
 	
 	private void barracksBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// Controls barracks
-   	 if (p.getResources() >= rangedType.cost && rangedCount < 5){
+   	 if (p.getResources() >= rangedType.cost && rangedUnitList.size() < 5){
 	        train(u, rangedType);
 	        System.out.println("Ranger Spawned");
 	    }
-   	 else if (p.getResources() >= heavyType.cost && heavyCount < 3) {
+   	 else if (p.getResources() >= heavyType.cost && heavyUnitList.size() < 3) {
    		 	train(u, heavyType);
    		 	System.out.println("Heavy Spawned");
    	 }
@@ -206,7 +204,7 @@ public class GLaDOS extends AbstractionLayerAI {
     private void rangedBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// Controls ranged units
 		// Controls ranged units
-    	if (rangedCount > 1) {
+    	if (rangedUnitList.size() > 1) {
         	Unit closestEnemy = closestEnemyUnit(u);
         	attack(u, closestEnemy);
     	}
@@ -216,6 +214,10 @@ public class GLaDOS extends AbstractionLayerAI {
     		
     		if (closestDistance < 4) {
     			attack(u, closestEnemy);
+    		}
+    		
+    		else if (p.getResources() >= rangedType.cost && rangedUnitList.size() < 2) {
+    			attack(u,closestEnemy);
     		}
     	}
     }
@@ -268,7 +270,7 @@ public class GLaDOS extends AbstractionLayerAI {
             	}
             	else if (base.getX() > 4 || base.getY() > 4) {
                     Unit u = freeWorkers.remove(0);
-                    buildIfNotAlreadyBuilding(u,barracksType,base.getX() - 1,base.getY() + 1,reservedPositions,p,pgs);
+                    buildIfNotAlreadyBuilding(u,barracksType,base.getX(),base.getY() + 2,reservedPositions,p,pgs);
                 	resourcesUsed += barracksType.cost;
             	}
             }
@@ -312,8 +314,13 @@ public class GLaDOS extends AbstractionLayerAI {
                 }
             }
             else {
-            	Unit closestEnemy = closestEnemyUnit(u);
-            	attack(u, closestEnemy);
+            	if (enemyBase != null) {
+            		attack(u, enemyBase);
+            	}
+            	else {
+            		Unit closestEnemy = closestEnemyUnit(u);
+                	attack(u, closestEnemy);
+            	}
             }
         }
     }
