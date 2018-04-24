@@ -22,8 +22,7 @@ import rts.units.UnitTypeTable;
 
 //Start of Bot class
 public class GLaDOS extends AbstractionLayerAI {
-	//Here I create all the variables i need for the game
-	//The units are assigned later on
+	// Here I initialise all the variables I need for the AI
 	Random r = new Random();
     protected UnitTypeTable utt;
     UnitType workerType;
@@ -33,20 +32,31 @@ public class GLaDOS extends AbstractionLayerAI {
     UnitType lightType;
     UnitType rangedType;
 
-    List<Unit> workerUnitList = new LinkedList<Unit>();
-    List<Unit> rangedUnitList = new LinkedList<Unit>();
-    List<Unit> heavyUnitList = new LinkedList<Unit>();
+    List<Unit> workerList = new LinkedList<Unit>();
+    List<Unit> rangedList = new LinkedList<Unit>();
+    List<Unit> heavyList = new LinkedList<Unit>();
+    List<Unit> lightList = new LinkedList<Unit>();
     List<Unit> UnitList = new LinkedList<Unit>();
     
-    Unit base = null;
-    Unit enemyBase = null;
-    Unit enemyBarracks = null;
+    List<Unit> enemyWorkerList = new LinkedList<Unit>();
+    List<Unit> enemyRangedList = new LinkedList<Unit>();
+    List<Unit> enemyHeavyList = new LinkedList<Unit>();
+    List<Unit> enemyLightList = new LinkedList<Unit>();
+    List<Unit> enemyUnitList = new LinkedList<Unit>();
+    
+    Unit base;
+    Unit barracks;
+    Unit enemyBase;
+    Unit enemyBarracks;
     
     Unit closestWorker = null;
     Unit closestWorker2 = null;
     
-    List<Unit> enemyUnitList = new LinkedList<Unit>();
+    int baseDefence;
     
+    int friendlyPower = 0;
+    int enemyPower = 0;
+        
     //Strategy I plan to implement here:
     //The base will spawn up to 5 workers to harvest
     //Then it will start creating 7 ranged attackers to defend which will leave one spot by the base for new spawns
@@ -95,86 +105,111 @@ public class GLaDOS extends AbstractionLayerAI {
     	
         PhysicalGameState pgs = gs.getPhysicalGameState();
         Player p = gs.getPlayer(player);
-        // System.out.println("GLaDOS " + player + " (cycle " + gs.getTime() + ")");
         
-        enemyUnitList.clear();
-        
-        for (Unit u : pgs.getUnits()) {
-        	if (u.getPlayer() != p.getID() && u.getType().isResource == false) {
-        		enemyUnitList.add(u);
-        		
-        	}
-        }
+        cleanup();
                 
         for (Unit u : pgs.getUnits()) {
-            if (u.getType() == baseType && u.getPlayer() == p.getID()) {
-            	base = u;
-    			//System.out.println("Friendly base found at X: " + base.getX() + " Y: " + base.getY());
-    		}
+        	// Takes all friendly units, sorts them and adds them to their respective lists
+        	if (u.getPlayer() == p.getID() && u.getType().isResource == false ) {
+        		if (u.getType() == baseType) {
+        			base = u;
+        			//System.out.println("Friendly base found at X: " + base.getX() + " Y: " + base.getY());
+        		}
+        		
+        		else if (u.getType() == barracksType) {
+        			barracks = u;
+        			//System.out.println("Friendly barracks found at X: " + barracks.getX() + " Y: " + barracks.getY());
+        		}
+        		
+        		else if (u.getType() == workerType) {
+        			workerList.add(u);
+        			UnitList.add(u);
+        			System.out.println("worker added to list");
+        		}
+        		
+        		else if (u.getType() == rangedType) {
+        			rangedList.add(u);
+        			UnitList.add(u);
+        		}
+        		
+        		else if (u.getType() == lightType) {
+        			lightList.add(u);
+        			UnitList.add(u);
+        		}
+        		
+        		else if (u.getType() == heavyType) {
+        			heavyList.add(u);
+        			UnitList.add(u);
+        		}
+        		
+        		else {
+        			System.out.println("Unplanned friendly unit detected!");
+        		}
+        	}
+        	
+        	else if (u.getPlayer() != p.getID() && u.getType().isResource == false) {
+        		// Takes all enemy units, sorts them and adds them to their respective lists
+        		if (u.getType() == baseType) {
+        			enemyBase = u;
+        			enemyUnitList.add(u);
+        			//System.out.println("Enemy base found at X: " + enemyBase.getX() + " Y: " + enemyBase.getY());
+        		}
+        		
+        		else if (u.getType() == barracksType) {
+        			enemyBarracks = u;
+        			enemyUnitList.add(u);
+        			//System.out.println("Enemy barracks found at X: " + enemyBarracks.getX() + " Y: " + enemyBarracks.getY());
+        		}
+        		
+        		else if (u.getType() == workerType) {
+        			enemyWorkerList.add(u);
+        			enemyUnitList.add(u);
+        		}
+        		
+        		else if (u.getType() == rangedType) {
+        			enemyRangedList.add(u);
+        			enemyUnitList.add(u);
+        		}
+        		
+        		else if (u.getType() == heavyType) {
+        			enemyHeavyList.add(u);
+        			enemyUnitList.add(u);
+        		}
+        		
+        		else {
+        			System.out.println("Unplanned enemy unit detected!");
+        		}
+        	}
+        	// Some units call their respective actions
+        	// Base and Barracks only get called if they aren't already doing a task
+        	
+            // Controls the base:
+                if (base != null && gs.getActionAssignment(base) == null) {
+                    baseBehavior(base, p, pgs);
+                }
+            }
+
+            // Controls Barracks:
+                if (barracks != null && gs.getActionAssignment(barracks) == null) {
+                    barracksBehavior(barracks, p, pgs);
+                }
             
-            else if (u.getType() == baseType && u.getPlayer() != p.getID()) {
-            	enemyBase = u;
-    			//System.out.println("Enemy base found at X: " + enemyBase.getX() + " Y: " + enemyBase.getY());
-    			//System.out.println(enemyUnitList);
+            // Controls Ranged Units
+            for (Unit u : rangedList) {
+                if (gs.getActionAssignment(u) == null) {
+                    rangedBehavior(u, p, pgs);
+                }
             }
-            
-            else if (u.getType() == barracksType && u.getPlayer() != p.getID()) {
-            	enemyBarracks = u;
-    			//System.out.println("Enemy base found at X: " + enemyBase.getX() + " Y: " + enemyBase.getY());
-    			//System.out.println(enemyUnitList);
+
+            // Controls melee units:
+            for (Unit u : lightList) {
+                if (gs.getActionAssignment(u) == null) {
+                    meleeUnitBehavior(u, p, gs);
+                }
             }
-           
-            else if (u.getType() == workerType && u.getPlayer() == p.getID()) {
-				workerUnitList.add(u);
-				UnitList.add(u);
-            }
-			else if (u.getType() == rangedType && u.getPlayer() == p.getID()) {
-				rangedUnitList.add(u);
-				UnitList.add(u);
-			}
-			else if (u.getType() == heavyType && u.getPlayer() == p.getID()) {
-				heavyUnitList.add(u);
-				UnitList.add(u);
-			}
-		}
         
-        // Controls the base:
-        for (Unit u : pgs.getUnits()) {
-            if (u.getType() == baseType && u.getPlayer() == player && gs.getActionAssignment(u) == null) {
-                baseBehavior(u, p, pgs);
-            }
-        }
-
-        // Controls Barracks:
-        for (Unit u : pgs.getUnits()) {
-            if (u.getType() == barracksType && u.getPlayer() == player && gs.getActionAssignment(u) == null) {
-                barracksBehavior(u, p, pgs);
-            }
-        }
+        workersBehavior(workerList, p, pgs);
         
-        // Controls Ranged Units
-        for (Unit u : pgs.getUnits()) {
-            if (u.getType() == rangedType && u.getPlayer() == player && gs.getActionAssignment(u) == null) {
-                rangedBehavior(u, p, pgs);
-            }
-        }
-
-        // Controls melee units:
-        for (Unit u : pgs.getUnits()) {
-            if (u.getType().canAttack && !u.getType().canHarvest && u.getType() != rangedType && u.getPlayer() == player && gs.getActionAssignment(u) == null) {
-                meleeUnitBehavior(u, p, gs);
-            }
-        }
-
-        // Controls workers:
-        List<Unit> workers = new LinkedList<Unit>();
-        for (Unit u : pgs.getUnits()) {
-            if (u.getType().canHarvest && u.getPlayer() == player) {
-                workers.add(u);
-            }
-        }
-        workersBehavior(workers, p, pgs);
-
         // This method simply takes all the unit actions executed so far, and packages them into a PlayerAction
         return translateActions(player, gs);
     }
@@ -182,7 +217,8 @@ public class GLaDOS extends AbstractionLayerAI {
 	public void baseBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// Controls all behaviour for the base
 		// If we drop below the set workers it will spawn more
-		if (workerUnitList.size() < 4) {
+		
+		if (workerList.size() > 2) {
 			train(u, workerType);
 	        System.out.println("Worker Spawned");
 		}
@@ -191,40 +227,62 @@ public class GLaDOS extends AbstractionLayerAI {
 	
 	private void barracksBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// Controls barracks
-   	 if (p.getResources() >= rangedType.cost && rangedUnitList.size() < 5){
+	 if (p.getResources() >= lightType.cost && lightList.size() < 2) {
+	   		 	train(u, lightType);
+	   		 	System.out.println("Light Spawned");
+	   	 }
+	 else if (p.getResources() >= rangedType.cost){
 	        train(u, rangedType);
 	        System.out.println("Ranger Spawned");
 	    }
-   	 else if (p.getResources() >= heavyType.cost && heavyUnitList.size() < 3) {
-   		 	train(u, heavyType);
-   		 	System.out.println("Heavy Spawned");
-   	 }
+
 	}
 	
     private void rangedBehavior(Unit u, Player p, PhysicalGameState pgs) {
 		// Controls ranged units
 		// Controls ranged units
-    	if (rangedUnitList.size() > 1) {
-        	Unit closestEnemy = closestEnemyUnit(u);
-        	attack(u, closestEnemy);
-    	}
-    	else {
-    		Unit closestEnemy = closestEnemyUnit(u);
-    		int closestDistance = distanceBetween(closestEnemy, u);
-    		
-    		if (closestDistance < 4) {
-    			attack(u, closestEnemy);
-    		}
-    		
-    		else if (p.getResources() >= rangedType.cost && rangedUnitList.size() < 2) {
-    			attack(u,closestEnemy);
-    		}
+    	if (enemyUnitList.size() > 0) {
+        	if (rangedList.size() > 1) {
+            	Unit closestEnemy = closestEnemyUnit(u);
+            	attack(u, closestEnemy);
+        	}
+        	else {
+        		Unit closestEnemy = closestEnemyUnit(u);
+        		int closestDistance = distanceBetween(closestEnemy, u);
+        		
+        		if (closestDistance < 4) {
+        			attack(u, closestEnemy);
+        		}
+        		
+        		else if (p.getResources() >= rangedType.cost && rangedList.size() < 2) {
+        			attack(u,closestEnemy);
+        		}
+        	}
     	}
     }
 
+
 	private void meleeUnitBehavior(Unit u, Player p, GameState gs) {
 		// Controls all non ranged units
-		attack(u, enemyBase);
+		Unit closestEnemyToBase = closestEnemyUnit(base);
+		int enemyDistanceToBase = distanceBetween(base, closestEnemyToBase);
+		
+		Unit closestEnemy = closestEnemyUnit(u);
+		int enemyDistance = distanceBetween(u, closestEnemy);
+		
+		if (enemyDistance < 3) {
+			attack(u, closestEnemy);
+		}
+		
+		if (enemyDistanceToBase < 4) {
+			attack(u, closestEnemyToBase);
+		}
+		
+		else {
+			move(u, base.getX() + baseDefence, base.getY());
+			baseDefence++;
+		}
+		
 	}
     
 	private void workersBehavior(List<Unit> workers, Player p, PhysicalGameState pgs) {
@@ -232,25 +290,15 @@ public class GLaDOS extends AbstractionLayerAI {
         List<Unit> freeWorkers = new LinkedList<Unit>();
         freeWorkers.addAll(workers);
         
-        int ownedBases = 0;
-        int ownedBarracks = 0;
         int resourcesUsed = 0;
 
         if (workers.isEmpty()) {
             return;
         }
 
-        for (Unit u2 : pgs.getUnits()) {
-            if (u2.getType() == baseType && u2.getPlayer() == p.getID()) {
-                ownedBases++;
-            }
-            if (u2.getType() == barracksType && u2.getPlayer() == p.getID()) {
-                ownedBarracks++;
-            }
-        }
 
         List<Integer> reservedPositions = new LinkedList<Integer>();
-        if (ownedBases == 0 && !freeWorkers.isEmpty()) {
+        if (base == null && !freeWorkers.isEmpty()) {
             // Checks if we have a base and builds one if possible
             if (p.getResources() >= baseType.cost + resourcesUsed) {
                 Unit u = freeWorkers.remove(0);
@@ -260,17 +308,17 @@ public class GLaDOS extends AbstractionLayerAI {
             }
         }
 
-        if (ownedBarracks == 0) {
+        if (barracks == null) {
             // Checks if we have a barracks and builds one if not
             if (p.getResources() >= barracksType.cost + resourcesUsed && !freeWorkers.isEmpty()) {
-            	if (base.getX() < 4 || base.getY() < 4) {
+            	if (base.getX() < 6 || base.getY() < 6) {
                     Unit u = freeWorkers.remove(0);
-                    buildIfNotAlreadyBuilding(u,barracksType,base.getX() + 3,base.getY() - 1,reservedPositions,p,pgs);
+                    buildIfNotAlreadyBuilding(u,barracksType,base.getX() + 3, base.getY() - 1,reservedPositions,p,pgs);
                 	resourcesUsed += barracksType.cost;
             	}
-            	else if (base.getX() > 4 || base.getY() > 4) {
+            	else if (base.getX() > 6 || base.getY() > 6) {
                     Unit u = freeWorkers.remove(0);
-                    buildIfNotAlreadyBuilding(u,barracksType,base.getX(),base.getY() + 2,reservedPositions,p,pgs);
+                    buildIfNotAlreadyBuilding(u,barracksType,base.getX(), base.getY() + 2,reservedPositions,p,pgs);
                 	resourcesUsed += barracksType.cost;
             	}
             }
@@ -359,6 +407,29 @@ public class GLaDOS extends AbstractionLayerAI {
     			}
 		}
 		return furthestEnemy;
+	}
+	
+	void cleanup(){
+        // I clear unit lists at the start of each cycle
+        // and immediately re-populate them so we don't keep dead units in the lists
+        workerList.clear();
+        rangedList.clear();
+        heavyList.clear();
+        lightList.clear();
+        UnitList.clear();
+        
+        enemyWorkerList.clear();
+        enemyRangedList.clear();
+        enemyHeavyList.clear();
+        enemyLightList.clear();
+        enemyUnitList.clear();
+        
+        base = null;
+        barracks = null;
+        enemyBase = null;
+        enemyBarracks = null;
+        
+        baseDefence = 1;
 	}
 	
 	@Override
